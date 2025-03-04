@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
-import { Settings } from "lucide-react";
+import { Settings as SettingsIcon } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface SystemSettings {
   currency: string;
@@ -26,7 +27,7 @@ interface SystemSettings {
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  
+
   const { data: settings } = useQuery<SystemSettings>({
     queryKey: ["/api/settings"],
   });
@@ -133,7 +134,7 @@ export default function SettingsPage() {
 
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Informations du cabinet</h3>
-                
+
                 <FormField
                   control={form.control}
                   name="companyInfo.name"
