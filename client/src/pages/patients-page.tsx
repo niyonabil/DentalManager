@@ -17,7 +17,7 @@ import { Patient, InsertPatient } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Plus, Edit, Trash2, Loader2 } from "lucide-react";
-import Link from 'next/link'; // Added import for Link
+import Link from 'next/link';
 
 
 export default function PatientsPage() {
@@ -90,7 +90,7 @@ export default function PatientsPage() {
                 createPatientMutation.mutate(data);
               }}
               isLoading={createPatientMutation.isPending}
-              onClose={() => {}} // Add onClose handler here - needs implementation in PatientForm
+              onClose={() => {}}
             />
           </DialogContent>
         </Dialog>
@@ -167,7 +167,6 @@ export default function PatientsPage() {
             <PatientForm
               initialValues={editingPatient}
               onSubmit={() => {
-                // Placeholder for actual update logic -  Assume this will close the dialog
                 handleCloseEditDialog();
               }}
               isLoading={false}

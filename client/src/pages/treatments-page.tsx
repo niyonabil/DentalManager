@@ -73,10 +73,11 @@ function convertNumberToWords(num: number): string {
 }
 
 export default function TreatmentsPage() {
-  const [selectedPatient, setSelectedPatient] = useState<Patient>();
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedTreatments, setSelectedTreatments] = useState<Treatment[]>([]);
-  const [openDialog, setOpenDialog] = useState(false); // Add state for the dialog
   const { toast } = useToast();
+  const currencySymbol = "DH"; // Placeholder - fetch from settings later
 
   const { data: patients } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
@@ -94,7 +95,6 @@ export default function TreatmentsPage() {
   const createTreatmentMutation = useMutation({
     mutationFn: async (treatment: any) => {
       try {
-        // Assurez-vous que les données sont correctement formatées
         const sanitizedTreatment = JSON.parse(JSON.stringify({
           ...treatment,
           date: treatment.date instanceof Date ? treatment.date.toISOString() : treatment.date,
@@ -119,7 +119,7 @@ export default function TreatmentsPage() {
         description: "Traitement ajouté avec succès",
       });
       form.reset();
-      setOpenDialog(false); // Close the dialog on success
+      setIsAddDialogOpen(false); 
     },
     onError: (error: any) => {
       toast({
@@ -175,7 +175,7 @@ export default function TreatmentsPage() {
                         })),
                         total_amount: totalCost,
                         amount_in_words: convertNumberToWords(totalCost),
-                        amount_in_figures: `${totalCost},00 DH`
+                        amount_in_figures: `${totalCost},00 ${currencySymbol}`
                       };
                       generatePDF("facture", documentData);
                     }}
@@ -196,7 +196,7 @@ export default function TreatmentsPage() {
                         })),
                         total_amount: totalCost,
                         amount_in_words: convertNumberToWords(totalCost),
-                        amount_in_figures: `${totalCost},00 DH`
+                        amount_in_figures: `${totalCost},00 ${currencySymbol}`
                       };
                       generatePDF("devis", documentData);
                     }}
@@ -217,7 +217,7 @@ export default function TreatmentsPage() {
                         })),
                         total_amount: totalCost,
                         amount_in_words: convertNumberToWords(totalCost),
-                        amount_in_figures: `${totalCost},00 DH`
+                        amount_in_figures: `${totalCost},00 ${currencySymbol}`
                       };
                       generatePDF("note_honoraire", documentData);
                     }}
@@ -244,9 +244,9 @@ export default function TreatmentsPage() {
             ))}
           </select>
 
-          <Dialog open={openDialog} onOpenChange={setOpenDialog}> {/* Added open prop and onOpenChange */}
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button disabled={!selectedPatient}>
+              <Button disabled={!selectedPatient} onClick={() => setIsAddDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nouveau Traitement
               </Button>
@@ -311,7 +311,7 @@ export default function TreatmentsPage() {
                     name="cost"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Coût (DH)</FormLabel>
+                        <FormLabel>Coût ({currencySymbol})</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -363,7 +363,7 @@ export default function TreatmentsPage() {
                       {new Date(treatment.date).toLocaleDateString("fr-FR")}
                     </p>
                     <p className="mt-2">{treatment.description}</p>
-                    <p className="mt-2 font-medium">{treatment.cost}DH</p>
+                    <p className="mt-2 font-medium">{treatment.cost} {currencySymbol}</p>
                     {treatment.notes && (
                       <p className="mt-2 text-sm text-gray-600">{treatment.notes}</p>
                     )}

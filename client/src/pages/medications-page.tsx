@@ -15,11 +15,17 @@ import { Plus, AlertTriangle, PackagePlus, Loader2 } from "lucide-react";
 
 export default function MedicationsPage() {
   const { toast } = useToast();
-  const [openDialog, setOpenDialog] = useState(false); // Added state for dialog control
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false); 
 
   const { data: medications } = useQuery<Medication[]>({
     queryKey: ["/api/medications"],
   });
+
+  const { data: settings } = useQuery<any>({
+    queryKey: ["/api/settings"],
+  });
+
+  const currencySymbol = settings?.currencySymbol || "€";
 
   const createMedicationMutation = useMutation({
     mutationFn: async (medication: any) => {
@@ -49,7 +55,7 @@ export default function MedicationsPage() {
         description: "Médicament ajouté avec succès",
       });
       form.reset();
-      setOpenDialog(false); // Close dialog on success
+      setIsAddDialogOpen(false); 
     },
     onError: (error: any) => {
       toast({
@@ -77,8 +83,14 @@ export default function MedicationsPage() {
     <DashboardLayout>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Médicaments</h1>
-        <Dialog open={openDialog} onClose={() => setOpenDialog(false)}> {/* Added open prop and onClose */}
-          <DialogContent className="sm:max-w-[500px]">
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}> 
+          <DialogTrigger asChild>
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau Médicament
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>Ajouter un médicament</DialogTitle>
             </DialogHeader>
@@ -162,7 +174,7 @@ export default function MedicationsPage() {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Prix</FormLabel>
+                        <FormLabel>Prix ({currencySymbol})</FormLabel>
                         <FormControl>
                           <Input type="number" {...field} onChange={(e) => field.onChange(parseInt(e.target.value))} />
                         </FormControl>
@@ -196,12 +208,6 @@ export default function MedicationsPage() {
             </Form>
           </DialogContent>
         </Dialog>
-        <DialogTrigger asChild onClick={() => setOpenDialog(true)}> {/*Added onClick*/}
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nouveau Médicament
-            </Button>
-          </DialogTrigger>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -214,7 +220,7 @@ export default function MedicationsPage() {
                   <p className="text-sm text-gray-500">{medication.description}</p>
                   <div className="mt-2 space-y-1">
                     <p>Stock: {medication.currentStock} {medication.unit}</p>
-                    <p>Prix: {medication.price}€</p>
+                    <p>Prix: {medication.price ? `${medication.price} ${currencySymbol}` : 'N/A'}</p>
                     {medication.supplier && (
                       <p className="text-sm text-gray-600">Fournisseur: {medication.supplier}</p>
                     )}
