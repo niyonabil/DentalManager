@@ -11,7 +11,8 @@ import {
   Pill,
   ActivitySquare,
   BarChart,
-  Loader2
+  Loader2,
+  Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -40,6 +41,7 @@ const navigationConfig = {
     { href: "/billing", label: "Documents", icon: FileText },
     { href: "/waiting-room", label: "Salle d'attente", icon: Timer },
     { href: "/stats", label: "Statistiques", icon: BarChart },
+    { href: "/settings", label: "Paramètres", icon: Settings },
   ],
 };
 

@@ -122,13 +122,15 @@ export const documents = pgTable("documents", {
   id: serial("id").primaryKey(),
   patientId: integer("patient_id").notNull(),
   type: text("type").notNull(), // invoice, quote, note_honoraire
+  number: text("number"), // FAC-2025-001, DEV-2025-001
   data: json("data").notNull(),
   date: timestamp("date").notNull(),
-  documentNumber: text("document_number"), // Numéro de document (sauf pour note d'honoraire)
+  documentNumber: text("document_number"), // Numéro de document
   notes: text("notes"), // Notes additionnelles
   items: json("items").notNull().default([]), // Liste des soins/traitements inclus
   total: integer("total").notNull(),
   status: text("status").notNull().default("draft"), // draft, final
+  payments: json("payments").notNull().default([]), // Liste des paiements associés
 });
 
 export const insertDocumentSchema = createInsertSchema(documents)
@@ -140,6 +142,42 @@ export const insertDocumentSchema = createInsertSchema(documents)
       cost: z.number(),
     })),
   });
+
+// Settings model
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  currency: text("currency").notNull().default("EUR"),
+  currencySymbol: text("currency_symbol").notNull().default("€"),
+  documentPrefix: json("document_prefix").notNull().default({
+    invoice: "FAC",
+    quote: "DEV"
+  }),
+  companyInfo: json("company_info").notNull().default({
+    name: "",
+    address: "",
+    phone: "",
+    email: ""
+  }),
+});
+
+// Patient Payments model
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  patientId: integer("patient_id").notNull(),
+  amount: integer("amount").notNull(),
+  date: timestamp("date").notNull(),
+  type: text("type").notNull(), // "advance" or "payment"
+  documentId: integer("document_id"), // Lien vers la facture si paiement
+  notes: text("notes"),
+});
+
+export const insertPaymentSchema = createInsertSchema(payments)
+  .omit({ id: true })
+  .extend({
+    amount: z.number().min(0),
+    type: z.enum(["advance", "payment"]),
+  });
+
 
 // Statistics views
 export const financialStats = pgTable("financial_stats", {
@@ -174,3 +212,6 @@ export type Document = typeof documents.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
 
 export type FinancialStat = typeof financialStats.$inferSelect;
+export type Settings = typeof settings.$inferSelect;
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
