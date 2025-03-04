@@ -68,18 +68,24 @@ export default function AppointmentsPage() {
     resolver: zodResolver(insertAppointmentSchema),
     defaultValues: {
       patientId: 0,
-      date: selectedDate?.toISOString(),
+      date: "",
       duration: 30,
       notes: "",
       status: "scheduled",
+      isUrgent: false,
+      isPassenger: false,
     },
   });
 
   const events = appointments?.map(appointment => {
     const patient = patients?.find(p => p.id === appointment.patientId);
+    const title = patient ? `${patient.firstName} ${patient.lastName}` : `Patient #${appointment.patientId}`;
+    const urgentPrefix = appointment.isUrgent ? "🚨 " : "";
+    const passengerPrefix = appointment.isPassenger ? "👤 " : "";
+
     return {
       id: appointment.id,
-      title: patient ? `${patient.firstName} ${patient.lastName}` : `Patient #${appointment.patientId}`,
+      title: `${urgentPrefix}${passengerPrefix}${title}`,
       start: new Date(appointment.date),
       end: new Date(new Date(appointment.date).getTime() + appointment.duration * 60000),
     };
@@ -104,7 +110,10 @@ export default function AppointmentsPage() {
             </DialogHeader>
             <Form {...form}>
               <form
-                onSubmit={form.handleSubmit((data) => createAppointmentMutation.mutate(data))}
+                onSubmit={form.handleSubmit((data) => createAppointmentMutation.mutate({
+                  ...data,
+                  date: new Date(data.date).toISOString()
+                }))}
                 className="space-y-4"
               >
                 <FormField
@@ -134,6 +143,7 @@ export default function AppointmentsPage() {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="date"
@@ -143,15 +153,14 @@ export default function AppointmentsPage() {
                       <FormControl>
                         <Input 
                           type="datetime-local" 
-                          {...field} 
-                          value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
-                          onChange={(e) => field.onChange(new Date(e.target.value).toISOString())}
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="duration"
@@ -165,6 +174,45 @@ export default function AppointmentsPage() {
                     </FormItem>
                   )}
                 />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="isUrgent"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            checked={field.value}
+                            onChange={field.onChange}
+                            className="w-4 h-4"
+                          />
+                        </FormControl>
+                        <FormLabel className="m-0">Patient Urgent</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="isPassenger"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            checked={field.value}
+                            onChange={field.onChange}
+                            className="w-4 h-4"
+                          />
+                        </FormControl>
+                        <FormLabel className="m-0">Patient Passager</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
                   control={form.control}
                   name="notes"
@@ -178,6 +226,7 @@ export default function AppointmentsPage() {
                     </FormItem>
                   )}
                 />
+
                 <Button type="submit" className="w-full" disabled={createAppointmentMutation.isPending}>
                   {createAppointmentMutation.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />

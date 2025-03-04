@@ -7,6 +7,7 @@ import { Appointment, Patient } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { UserCheck, Clock, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface WaitingAppointment extends Appointment {
   patient?: Patient;
@@ -33,8 +34,14 @@ export default function WaitingRoomPage() {
           ...apt,
           patient: patients.find(p => p.id === apt.patientId),
         }))
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-      
+        .sort((a, b) => {
+          // Sort by urgency first
+          if (a.isUrgent && !b.isUrgent) return -1;
+          if (!a.isUrgent && b.isUrgent) return 1;
+          // Then by appointment time
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        });
+
       setWaitingList(todayAppointments);
     }
   }, [appointments, patients]);
@@ -62,6 +69,13 @@ export default function WaitingRoomPage() {
 
   const isLoading = isLoadingAppointments || isLoadingPatients;
 
+  const getPatientStatus = (appointment: WaitingAppointment) => {
+    const statusIndicators = [];
+    if (appointment.isUrgent) statusIndicators.push("🚨 Urgent");
+    if (appointment.isPassenger) statusIndicators.push("👤 Passager");
+    return statusIndicators.join(" • ");
+  };
+
   return (
     <DashboardLayout>
       <div className="flex justify-between items-center mb-6">
@@ -86,7 +100,11 @@ export default function WaitingRoomPage() {
                   .map((appointment) => (
                     <div
                       key={appointment.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                      className={cn(
+                        "flex items-center justify-between p-4 rounded-lg",
+                        appointment.isUrgent ? "bg-red-50" : "bg-gray-50",
+                        appointment.isPassenger ? "border-2 border-blue-200" : ""
+                      )}
                     >
                       <div>
                         <div className="font-medium">
@@ -97,6 +115,9 @@ export default function WaitingRoomPage() {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
+                        </div>
+                        <div className="text-sm font-medium text-primary">
+                          {getPatientStatus(appointment)}
                         </div>
                       </div>
                       <Button
@@ -124,7 +145,11 @@ export default function WaitingRoomPage() {
                   .map((appointment) => (
                     <div
                       key={appointment.id}
-                      className="p-4 bg-primary/10 rounded-lg"
+                      className={cn(
+                        "p-4 rounded-lg",
+                        appointment.isUrgent ? "bg-red-50" : "bg-primary/10",
+                        appointment.isPassenger ? "border-2 border-blue-200" : ""
+                      )}
                     >
                       <div className="font-medium">
                         {appointment.patient?.firstName} {appointment.patient?.lastName}
@@ -134,6 +159,9 @@ export default function WaitingRoomPage() {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
+                      </div>
+                      <div className="text-sm font-medium text-primary">
+                        {getPatientStatus(appointment)}
                       </div>
                     </div>
                   ))}

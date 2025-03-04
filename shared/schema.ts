@@ -41,15 +41,25 @@ export const insertPatientSchema = createInsertSchema(patients)
 export const appointments = pgTable("appointments", {
   id: serial("id").primaryKey(),
   patientId: integer("patient_id").notNull(),
-  date: timestamp("date").notNull(),
+  date: text("date").notNull(), // Changed from timestamp to text
   duration: integer("duration").notNull(), // in minutes
   status: text("status").notNull().default("scheduled"),
   notes: text("notes"),
+  isUrgent: boolean("is_urgent").notNull().default(false), // Added urgent flag
+  isPassenger: boolean("is_passenger").notNull().default(false), // Added passenger flag
 });
 
-export const insertAppointmentSchema = createInsertSchema(appointments).omit({
-  id: true
-});
+export const insertAppointmentSchema = createInsertSchema(appointments)
+  .omit({ id: true })
+  .extend({
+    date: z.string(),
+    patientId: z.number(),
+    duration: z.number(),
+    status: z.string().default("scheduled"),
+    notes: z.string().optional(),
+    isUrgent: z.boolean().default(false),
+    isPassenger: z.boolean().default(false),
+  });
 
 // Treatment model
 export const treatments = pgTable("treatments", {
