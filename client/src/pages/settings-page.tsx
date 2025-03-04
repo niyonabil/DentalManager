@@ -51,15 +51,31 @@ export default function SettingsPage() {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: SystemSettings) => {
-      const res = await apiRequest("POST", "/api/settings", data);
-      return res.json();
+      try {
+        const res = await apiRequest("POST", "/api/settings", data);
+        const responseData = await res.json();
+        if (!res.ok) throw new Error(responseData.message || 'Failed to update settings');
+        return responseData;
+      } catch (error) {
+        console.error('Error updating settings:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       toast({
         title: "Succès",
         description: "Paramètres mis à jour",
       });
+      form.reset(form.getValues());
     },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de mettre à jour les paramètres",
+        variant: "destructive"
+      });
+    }
   });
 
   return (

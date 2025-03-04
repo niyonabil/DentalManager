@@ -73,6 +73,8 @@ export const treatments = pgTable("treatments", {
   documentId: integer("document_id"), // Lien vers la facture/devis
   notes: text("notes"),
   medications: json("medications").notNull().default([]), // Médicaments prescrits
+  paymentStatus: text("payment_status").notNull().default("pending"), // pending, partial, completed
+  paidAmount: integer("paid_amount").notNull().default(0),
 });
 
 export const insertTreatmentSchema = createInsertSchema(treatments)
@@ -83,7 +85,31 @@ export const insertTreatmentSchema = createInsertSchema(treatments)
       quantity: z.number(),
       instructions: z.string(),
     })),
+    paymentStatus: z.enum(["pending", "partial", "completed"]).default("pending"),
+    paidAmount: z.number().default(0),
   });
+
+// Payment model for tracking patient payments
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  patientId: integer("patient_id").notNull(),
+  treatmentId: integer("treatment_id").notNull(),
+  amount: integer("amount").notNull(),
+  date: timestamp("date").notNull(),
+  type: text("type").notNull(), // advance, full, installment
+  documentId: integer("document_id"), // Lien vers la facture si paiement
+  notes: text("notes"),
+});
+
+export const insertPaymentSchema = createInsertSchema(payments)
+  .omit({ id: true })
+  .extend({
+    date: z.date(),
+    type: z.enum(["advance", "full", "installment"]),
+    notes: z.string().optional(),
+  });
+
+
 
 // Medication/Stock model
 export const medications = pgTable("medications", {
@@ -160,23 +186,6 @@ export const settings = pgTable("settings", {
   }),
 });
 
-// Patient Payments model
-export const payments = pgTable("payments", {
-  id: serial("id").primaryKey(),
-  patientId: integer("patient_id").notNull(),
-  amount: integer("amount").notNull(),
-  date: timestamp("date").notNull(),
-  type: text("type").notNull(), // "advance" or "payment"
-  documentId: integer("document_id"), // Lien vers la facture si paiement
-  notes: text("notes"),
-});
-
-export const insertPaymentSchema = createInsertSchema(payments)
-  .omit({ id: true })
-  .extend({
-    amount: z.number().min(0),
-    type: z.enum(["advance", "payment"]),
-  });
 
 
 // Statistics views

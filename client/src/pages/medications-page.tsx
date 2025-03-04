@@ -22,8 +22,15 @@ export default function MedicationsPage() {
 
   const createMedicationMutation = useMutation({
     mutationFn: async (medication: any) => {
-      const res = await apiRequest("POST", "/api/medications", medication);
-      return res.json();
+      try {
+        const res = await apiRequest("POST", "/api/medications", medication);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Failed to create medication');
+        return data;
+      } catch (error) {
+        console.error('Error creating medication:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
@@ -31,7 +38,15 @@ export default function MedicationsPage() {
         title: "Succès",
         description: "Médicament ajouté avec succès",
       });
+      form.reset();
     },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible d'ajouter le médicament",
+        variant: "destructive"
+      });
+    }
   });
 
   const form = useForm({
