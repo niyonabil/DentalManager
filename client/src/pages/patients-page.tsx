@@ -20,8 +20,9 @@ import { Search, Plus, Edit, Trash2, Loader2 } from "lucide-react";
 
 export default function PatientsPage() {
   const [search, setSearch] = useState("");
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null); // Added state for editing
   const { toast } = useToast();
-  
+
   const { data: patients, isLoading } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
   });
@@ -53,10 +54,19 @@ export default function PatientsPage() {
     },
   });
 
-  const filteredPatients = patients?.filter(patient => 
+  const filteredPatients = patients?.filter(patient =>
     patient.firstName.toLowerCase().includes(search.toLowerCase()) ||
     patient.lastName.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleEdit = (patient: Patient) => {
+    setEditingPatient(patient);
+  };
+
+  const handleCloseEditDialog = () => {
+    setEditingPatient(null);
+  };
+
 
   return (
     <DashboardLayout>
@@ -117,7 +127,7 @@ export default function PatientsPage() {
                   <TableCell>{patient.email}</TableCell>
                   <TableCell>{patient.address}</TableCell>
                   <TableCell className="space-x-2">
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(patient)}>
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button
@@ -138,6 +148,21 @@ export default function PatientsPage() {
           </Table>
         </div>
       )}
+      {/* Edit Patient Dialog */}
+      <Dialog open={editingPatient !== null} onClose={handleCloseEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier le patient</DialogTitle>
+          </DialogHeader>
+          {editingPatient && (
+            <PatientForm
+              initialValues={editingPatient}
+              onSubmit={() => alert('Edit Patient Logic Here')} // Placeholder for actual update logic
+              isLoading={false} // Add loading state as needed
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

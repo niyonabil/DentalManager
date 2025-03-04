@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertPatientSchema, type InsertPatient } from "@shared/schema";
+import { insertPatientSchema, type InsertPatient, type Patient } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,11 +15,11 @@ import {
 
 interface PatientFormProps {
   onSubmit: (data: InsertPatient) => void;
-  defaultValues?: Partial<InsertPatient>;
+  initialData?: Patient; // Added initialData prop
   isLoading?: boolean;
 }
 
-export function PatientForm({ onSubmit, defaultValues, isLoading }: PatientFormProps) {
+export function PatientForm({ onSubmit, initialData, isLoading }: PatientFormProps) {
   const form = useForm<InsertPatient>({
     resolver: zodResolver(insertPatientSchema),
     defaultValues: {
@@ -30,7 +30,7 @@ export function PatientForm({ onSubmit, defaultValues, isLoading }: PatientFormP
       phone: "",
       email: "",
       address: "",
-      ...defaultValues,
+      ...initialData, // Use initialData for default values
     },
   });
 
