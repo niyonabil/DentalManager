@@ -27,21 +27,21 @@ export function Sidebar() {
   return (
     <div className="w-64 bg-white border-r min-h-screen p-4 flex flex-col">
       <div className="text-xl font-bold mb-8 text-center">Cabinet Dentaire</div>
-      
+
       <nav className="space-y-2 flex-1">
         {navigationItems.map((item) => {
           const Icon = item.icon;
           return (
             <Link key={item.href} href={item.href}>
-              <a
+              <button
                 className={cn(
-                  "flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100",
+                  "flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 w-full text-left",
                   location === item.href && "bg-gray-100 text-primary"
                 )}
               >
                 <Icon className="h-5 w-5" />
                 <span>{item.label}</span>
-              </a>
+              </button>
             </Link>
           );
         })}
