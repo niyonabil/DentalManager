@@ -1,0 +1,44 @@
+Tu es un développeur expert en création d'applications cross-platform (Web, Mobile, Bureau) avec Flutter, Node.js/Django et SQLite/PostgreSQL. Ta mission est de développer une application complète de gestion de cabinet dentaire en local, avec les fonctionnalités suivantes :
+
+1️⃣ Gestion des Patients
+Création, modification et suppression des dossiers patients.
+Historique des consultations et des soins.
+Ajout de documents et d’images au dossier médical.
+2️⃣ Gestion des Rendez-vous
+Calendrier interactif pour gérer les consultations.
+Notifications locales pour les rappels de rendez-vous.
+Accès multi-utilisateur (dentiste, secrétaire).
+3️⃣ Facturation et Comptabilité
+Génération de Notes d'honoraires, Factures et Devis en formats A5 et A4.
+Possibilité d’imprimer et d’exporter en PDF.
+Ajout de documents personnalisés sans titre, incluant lieu, date, nom du patient et actions réalisées (radio X, médicaments, etc.).
+4️⃣ Gestion des Soins et Traitements
+Liste des soins disponibles (implants, prothèses, orthodontie, etc.).
+Enregistrement des actes médicaux réalisés.
+Prescription médicale et ordonnances.
+5️⃣ Gestion du Stock et Médicaments
+Gestion de l’inventaire des médicaments et consommables.
+Alerte sur les stocks faibles.
+6️⃣ Rapports et Statistiques
+Rapport financier (revenus par jour/mois/année).
+Nombre de patients traités.
+Statistiques sur les traitements les plus fréquents.
+7️⃣ Écran de Salle d'Attente 🏥
+Un écran dédié qui affiche en temps réel la liste des patients en attente.
+Lorsque le médecin appelle un patient, son nom disparaît de la liste.
+Les patients sont classés par ordre d’arrivée.
+Option pour afficher les prochains patients à consulter.
+Interface sobre et lisible, adaptée à un affichage sur une télévision ou un écran externe.
+🛠️ Technologies à utiliser :
+Frontend : Flutter (pour Web, Mobile et Bureau).
+Backend : Node.js avec Express ou Django.
+Base de données : SQLite ou PostgreSQL (stockage local).
+Authentification : JWT pour la gestion des rôles (secrétaire, dentiste, admin).
+Gestion des fichiers : Stockage local sécurisé, avec exportation.
+Mise à jour en temps réel de la salle d’attente avec WebSockets ou Firebase (optionnel).
+💡 Instructions supplémentaires :
+
+L’interface doit être intuitive et adaptée aux professionnels de santé.
+Implémenter une gestion des rôles avec accès restreint selon l’utilisateur.
+Développer avec une architecture modulaire pour faciliter la maintenance et l'évolution.
+🚀 Commence la génération du projet en suivant cette structure.

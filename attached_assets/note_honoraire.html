@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note D'honoraire</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            font-size: 12pt;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        .logo img {
+            width: 50px;
+            height: auto;
+            margin-right: 10px;
+        }
+        .clinic-info {
+            text-align: right;
+            direction: rtl;
+            font-size: 14pt;
+        }
+        .clinic-info-fr {
+            text-align: left;
+            font-size: 14pt;
+        }
+        .document-title {
+            text-align: center;
+            font-size: 18pt;
+            font-weight: bold;
+            margin: 30px 0;
+            border: 1px solid #000;
+            padding: 5px;
+        }
+        .info-section {
+            margin-bottom: 20px;
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .info-label {
+            width: 150px;
+            font-weight: bold;
+        }
+        .info-value {
+            flex: 1;
+            border-bottom: 1px dotted #000;
+        }
+        .treatment-section {
+            margin-bottom: 20px;
+        }
+        .treatment-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .treatment-label {
+            width: 150px;
+            font-weight: bold;
+        }
+        .treatment-value {
+            flex: 1;
+            border-bottom: 1px dotted #000;
+        }
+        .amount-section {
+            margin-bottom: 20px;
+        }
+        .amount-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .amount-label {
+            width: 150px;
+            font-weight: bold;
+        }
+        .amount-value {
+            flex: 1;
+            border-bottom: 1px dotted #000;
+        }
+        .signature {
+            text-align: right;
+            margin-top: 50px;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 10pt;
+            border-top: 1px solid #000;
+            padding-top: 10px;
+        }
+        .tooth-diagram {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+            display: none; /* Hidden by default, can be shown when needed */
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="clinic-info-fr">
+            <div>Cabinet Dentaire</div>
+            <div>Dr Mly Driss Dribi Oulghazi</div>
+            <div>Chirurgien - Dentiste</div>
+        </div>
+        <div class="logo">
+            <img src="{{logo_path}}" alt="Logo Cabinet Dentaire">
+        </div>
+        <div class="clinic-info">
+            <div>عيادة خاصة لجراحة الأسنان</div>
+            <div>الدكتور مولاي ادريس الدريبي الولغازي</div>
+            <div>طبيب جراح للأسنان</div>
+        </div>
+    </div>
+
+    <div class="services">
+        <div style="text-align: left;">Soins - Chirurgie - Orthodontie - Prothèse- Blanchiment- Radiographie</div>
+        <div style="text-align: right;">علاج - جراحة - تقويم اعوجاج الأسنان - تركيب - تبييض - أشعة</div>
+    </div>
+
+    <div style="text-align: right; margin-top: 20px;">
+        Sefrou, le {{date}}
+    </div>
+
+    <div class="info-section">
+        <div class="info-row">
+            <div class="info-label">Nom et Prénom:</div>
+            <div class="info-value">{{patient_name}}</div>
+        </div>
+    </div>
+
+    <div class="document-title">
+        Note D'honoraire
+    </div>
+
+    <div class="treatment-section">
+        <div class="treatment-row">
+            <div class="treatment-label">Nature du travail:</div>
+            <div class="treatment-value">{{treatment_description}}</div>
+        </div>
+    </div>
+
+    <div class="amount-section">
+        <div class="amount-row">
+            <div class="amount-label">Montant Réglé en lettres:</div>
+            <div class="amount-value">{{amount_in_words}}</div>
+        </div>
+        <div class="amount-row">
+            <div class="amount-label">Montant Réglé en Chiffres:</div>
+            <div class="amount-value">{{amount_in_figures}}</div>
+        </div>
+    </div>
+
+    <div class="signature">
+        Signature et Cachet
+    </div>
+
+    <div class="footer">
+        <div>العنوان: تجزئة بنزكري 1 بلوك 1 شقة 1 صفرو</div>
+        <div>Adresse : Lot Benzekri Bloc 1 App 1 Sefrou</div>
+        <div>Téléphone Fixe : 05 35 66 24 99</div>
+    </div>
+</body>
+</html>
