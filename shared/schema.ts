@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -41,12 +41,12 @@ export const insertPatientSchema = createInsertSchema(patients)
 export const appointments = pgTable("appointments", {
   id: serial("id").primaryKey(),
   patientId: integer("patient_id").notNull(),
-  date: text("date").notNull(), // Changed from timestamp to text
+  date: text("date").notNull(),
   duration: integer("duration").notNull(), // in minutes
   status: text("status").notNull().default("scheduled"),
   notes: text("notes"),
-  isUrgent: boolean("is_urgent").notNull().default(false), // Added urgent flag
-  isPassenger: boolean("is_passenger").notNull().default(false), // Added passenger flag
+  isUrgent: boolean("is_urgent").notNull().default(false),
+  isPassenger: boolean("is_passenger").notNull().default(false),
 });
 
 export const insertAppointmentSchema = createInsertSchema(appointments)
@@ -61,19 +61,60 @@ export const insertAppointmentSchema = createInsertSchema(appointments)
     isPassenger: z.boolean().default(false),
   });
 
-// Treatment model
+// Treatment model with more details
 export const treatments = pgTable("treatments", {
   id: serial("id").primaryKey(),
   patientId: integer("patient_id").notNull(),
-  type: text("type").notNull(),
-  description: text("description"),
+  type: text("type").notNull(), // implant, prothèse, orthodontie, etc.
+  description: text("description").notNull(),
   cost: integer("cost").notNull(),
   date: timestamp("date").notNull(),
-  status: text("status").notNull().default("pending"),
+  status: text("status").notNull().default("completed"),
+  documentId: integer("document_id"), // Lien vers la facture/devis
+  notes: text("notes"),
+  medications: json("medications").notNull().default([]), // Médicaments prescrits
 });
 
-export const insertTreatmentSchema = createInsertSchema(treatments).omit({
-  id: true
+export const insertTreatmentSchema = createInsertSchema(treatments)
+  .omit({ id: true })
+  .extend({
+    medications: z.array(z.object({
+      medicationId: z.number(),
+      quantity: z.number(),
+      instructions: z.string(),
+    })),
+  });
+
+// Medication/Stock model
+export const medications = pgTable("medications", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  currentStock: integer("current_stock").notNull(),
+  minimumStock: integer("minimum_stock").notNull(),
+  unit: text("unit").notNull(), // comprimé, ml, etc.
+  price: integer("price"),
+  supplier: text("supplier"),
+  lastRestockDate: timestamp("last_restock_date"),
+});
+
+export const insertMedicationSchema = createInsertSchema(medications).omit({
+  id: true,
+});
+
+// Stock Movement model
+export const stockMovements = pgTable("stock_movements", {
+  id: serial("id").primaryKey(),
+  medicationId: integer("medication_id").notNull(),
+  quantity: integer("quantity").notNull(), // positive for in, negative for out
+  date: timestamp("date").notNull(),
+  type: text("type").notNull(), // "in" or "out"
+  reason: text("reason"), // "treatment", "expired", "restock"
+  treatmentId: integer("treatment_id"), // if movement is related to a treatment
+});
+
+export const insertStockMovementSchema = createInsertSchema(stockMovements).omit({
+  id: true,
 });
 
 // Document model for invoices, quotes etc.
@@ -83,10 +124,31 @@ export const documents = pgTable("documents", {
   type: text("type").notNull(), // invoice, quote, note_honoraire
   data: json("data").notNull(),
   date: timestamp("date").notNull(),
+  documentNumber: text("document_number"), // Numéro de document (sauf pour note d'honoraire)
+  notes: text("notes"), // Notes additionnelles
+  items: json("items").notNull().default([]), // Liste des soins/traitements inclus
+  total: integer("total").notNull(),
+  status: text("status").notNull().default("draft"), // draft, final
 });
 
-export const insertDocumentSchema = createInsertSchema(documents).omit({
-  id: true
+export const insertDocumentSchema = createInsertSchema(documents)
+  .omit({ id: true })
+  .extend({
+    items: z.array(z.object({
+      treatmentId: z.number(),
+      description: z.string(),
+      cost: z.number(),
+    })),
+  });
+
+// Statistics views
+export const financialStats = pgTable("financial_stats", {
+  id: serial("id").primaryKey(),
+  date: date("date").notNull(),
+  totalRevenue: integer("total_revenue").notNull().default(0),
+  treatmentCount: integer("treatment_count").notNull().default(0),
+  patientCount: integer("patient_count").notNull().default(0),
+  commonTreatments: json("common_treatments").notNull().default([]),
 });
 
 // Export types
@@ -102,5 +164,13 @@ export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
 export type Treatment = typeof treatments.$inferSelect;
 export type InsertTreatment = z.infer<typeof insertTreatmentSchema>;
 
+export type Medication = typeof medications.$inferSelect;
+export type InsertMedication = z.infer<typeof insertMedicationSchema>;
+
+export type StockMovement = typeof stockMovements.$inferSelect;
+export type InsertStockMovement = z.infer<typeof insertStockMovementSchema>;
+
 export type Document = typeof documents.$inferSelect;
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+
+export type FinancialStat = typeof financialStats.$inferSelect;

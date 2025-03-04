@@ -8,6 +8,9 @@ import {
   LogOut,
   Users,
   Timer,
+  Pill,
+  ActivitySquare,
+  BarChart,
   Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,14 +25,21 @@ const navigationConfig = {
   dentist: [
     { href: "/", label: "Accueil", icon: Home },
     { href: "/patients", label: "Patients", icon: Users },
+    { href: "/treatments", label: "Traitements", icon: ActivitySquare },
+    { href: "/medications", label: "Médicaments", icon: Pill },
     { href: "/waiting-room", label: "Salle d'attente", icon: Timer },
+    { href: "/billing", label: "Documents", icon: FileText },
+    { href: "/stats", label: "Statistiques", icon: BarChart },
   ],
   admin: [
     { href: "/", label: "Accueil", icon: Home },
     { href: "/patients", label: "Patients", icon: Users },
     { href: "/appointments", label: "Rendez-vous", icon: Calendar },
-    { href: "/billing", label: "Facturation", icon: FileText },
+    { href: "/treatments", label: "Traitements", icon: ActivitySquare },
+    { href: "/medications", label: "Médicaments", icon: Pill },
+    { href: "/billing", label: "Documents", icon: FileText },
     { href: "/waiting-room", label: "Salle d'attente", icon: Timer },
+    { href: "/stats", label: "Statistiques", icon: BarChart },
   ],
 };
 
