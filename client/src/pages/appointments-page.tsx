@@ -25,6 +25,8 @@ import { insertAppointmentSchema, type Appointment, type InsertAppointment, type
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Loader2 } from "lucide-react";
+import Link from 'next/link';
+
 
 const locales = {
   'fr': fr,
@@ -40,6 +42,7 @@ const localizer = dateFnsLocalizer({
 
 export default function AppointmentsPage() {
   const [selectedDate, setSelectedDate] = useState<Date>();
+  const [openDialog, setOpenDialog] = useState(false); // Added state to control the dialog
   const { toast } = useToast();
 
   const { data: appointments, isLoading: isLoadingAppointments } = useQuery<Appointment[]>({
@@ -61,6 +64,7 @@ export default function AppointmentsPage() {
         title: "Success",
         description: "Rendez-vous ajouté avec succès",
       });
+      setOpenDialog(false); // Close the dialog on success
     },
   });
 
@@ -97,7 +101,7 @@ export default function AppointmentsPage() {
     <DashboardLayout>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Rendez-vous</h1>
-        <Dialog>
+        <Dialog open={openDialog} onOpenChange={setOpenDialog}> {/* Added open prop and onOpenChange */}
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
@@ -237,6 +241,9 @@ export default function AppointmentsPage() {
             </Form>
           </DialogContent>
         </Dialog>
+        <Link href="/paiements">
+          <Button>Paiements Patients</Button>
+        </Link>
       </div>
 
       {isLoading ? (

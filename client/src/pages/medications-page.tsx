@@ -15,6 +15,7 @@ import { Plus, AlertTriangle, PackagePlus, Loader2 } from "lucide-react";
 
 export default function MedicationsPage() {
   const { toast } = useToast();
+  const [openDialog, setOpenDialog] = useState(false); // Added state for dialog control
 
   const { data: medications } = useQuery<Medication[]>({
     queryKey: ["/api/medications"],
@@ -23,14 +24,13 @@ export default function MedicationsPage() {
   const createMedicationMutation = useMutation({
     mutationFn: async (medication: any) => {
       try {
-        // Assurez-vous que les données sont correctement formatées
         const sanitizedMedication = JSON.parse(JSON.stringify({
           ...medication,
           currentStock: Number(medication.currentStock),
           minimumStock: Number(medication.minimumStock),
           price: Number(medication.price)
         }));
-        
+
         const res = await apiRequest("POST", "/api/medications", sanitizedMedication);
         if (!res.ok) {
           const data = await res.json();
@@ -49,6 +49,7 @@ export default function MedicationsPage() {
         description: "Médicament ajouté avec succès",
       });
       form.reset();
+      setOpenDialog(false); // Close dialog on success
     },
     onError: (error: any) => {
       toast({
@@ -76,13 +77,7 @@ export default function MedicationsPage() {
     <DashboardLayout>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Médicaments</h1>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nouveau Médicament
-            </Button>
-          </DialogTrigger>
+        <Dialog open={openDialog} onClose={() => setOpenDialog(false)}> {/* Added open prop and onClose */}
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Ajouter un médicament</DialogTitle>
@@ -201,6 +196,12 @@ export default function MedicationsPage() {
             </Form>
           </DialogContent>
         </Dialog>
+        <DialogTrigger asChild onClick={() => setOpenDialog(true)}> {/*Added onClick*/}
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau Médicament
+            </Button>
+          </DialogTrigger>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

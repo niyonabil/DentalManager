@@ -12,9 +12,11 @@ import { insertPaymentSchema, type Payment, type Patient, type Treatment } from 
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Loader2 } from "lucide-react";
+import Link from 'next/link'; // Added import for Link component
 
 export default function PaymentsPage() {
   const [selectedPatient, setSelectedPatient] = useState<Patient>();
+  const [openDialog, setOpenDialog] = useState(false); // Added state for dialog control
   const { toast } = useToast();
 
   const { data: patients } = useQuery<Patient[]>({
@@ -51,6 +53,7 @@ export default function PaymentsPage() {
         description: "Paiement enregistré avec succès",
       });
       form.reset();
+      setOpenDialog(false); // Close the dialog after successful submission
     },
     onError: (error: any) => {
       toast({
@@ -93,9 +96,9 @@ export default function PaymentsPage() {
             ))}
           </select>
 
-          <Dialog>
+          <Dialog open={openDialog} onOpenChange={setOpenDialog}> {/* Added open and onOpenChange props */}
             <DialogTrigger asChild>
-              <Button disabled={!selectedPatient}>
+              <Button>
                 <Plus className="h-4 w-4 mr-2" />
                 Nouveau Paiement
               </Button>
@@ -202,6 +205,10 @@ export default function PaymentsPage() {
               </Form>
             </DialogContent>
           </Dialog>
+          {/* Added Link to patient payments */}
+          <Link href="/patient-payments">
+            <Button>Voir les paiements des patients</Button>
+          </Link>
         </div>
       </div>
 

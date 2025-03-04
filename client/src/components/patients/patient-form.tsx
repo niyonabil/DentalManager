@@ -15,11 +15,12 @@ import {
 
 interface PatientFormProps {
   onSubmit: (data: InsertPatient) => void;
+  onClose?: () => void; // Added onClose prop
   initialData?: Patient; // Added initialData prop
   isLoading?: boolean;
 }
 
-export function PatientForm({ onSubmit, initialData, isLoading }: PatientFormProps) {
+export function PatientForm({ onSubmit, onClose, initialData, isLoading }: PatientFormProps) {
   const form = useForm<InsertPatient>({
     resolver: zodResolver(insertPatientSchema),
     defaultValues: {
@@ -34,9 +35,20 @@ export function PatientForm({ onSubmit, initialData, isLoading }: PatientFormPro
     },
   });
 
+  const handleFormSubmit = async (data: InsertPatient) => {
+    try {
+      await onSubmit(data); // Placeholder for actual submission logic
+      onClose?.(); //Close the form after submission
+    } catch (error) {
+      //Error handling -  replace with actual error handling
+      console.error("Error submitting form:", error);
+    }
+  };
+
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}

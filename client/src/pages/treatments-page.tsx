@@ -27,25 +27,25 @@ import { generatePDF, type DocumentData } from "@/lib/pdf-generator";
 function convertNumberToWords(num: number): string {
   const units = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
   const tens = ['', '', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante', 'soixante-dix', 'quatre-vingt', 'quatre-vingt-dix'];
-  
+
   if (num === 0) return 'zéro';
-  
+
   let words = '';
-  
+
   // Pour les milliers
   if (num >= 1000) {
     const thousands = Math.floor(num / 1000);
     words += (thousands === 1 ? 'mille ' : convertNumberToWords(thousands) + ' mille ');
     num %= 1000;
   }
-  
+
   // Pour les centaines
   if (num >= 100) {
     const hundreds = Math.floor(num / 100);
     words += (hundreds === 1 ? 'cent ' : convertNumberToWords(hundreds) + ' cent ');
     num %= 100;
   }
-  
+
   // Pour les dizaines et unités
   if (num > 0) {
     if (num < 20) {
@@ -53,7 +53,7 @@ function convertNumberToWords(num: number): string {
     } else {
       const ten = Math.floor(num / 10);
       const unit = num % 10;
-      
+
       if (ten === 7 || ten === 9) {
         words += tens[ten - 1] + '-';
         words += (unit === 1 ? 'et-' : '') + units[10 + unit];
@@ -67,7 +67,7 @@ function convertNumberToWords(num: number): string {
       }
     }
   }
-  
+
   // Première lettre en majuscule
   return words.charAt(0).toUpperCase() + words.slice(1) + ' euros';
 }
@@ -75,6 +75,7 @@ function convertNumberToWords(num: number): string {
 export default function TreatmentsPage() {
   const [selectedPatient, setSelectedPatient] = useState<Patient>();
   const [selectedTreatments, setSelectedTreatments] = useState<Treatment[]>([]);
+  const [openDialog, setOpenDialog] = useState(false); // Add state for the dialog
   const { toast } = useToast();
 
   const { data: patients } = useQuery<Patient[]>({
@@ -99,7 +100,7 @@ export default function TreatmentsPage() {
           date: treatment.date instanceof Date ? treatment.date.toISOString() : treatment.date,
           medications: Array.isArray(treatment.medications) ? treatment.medications : []
         }));
-        
+
         const res = await apiRequest("POST", "/api/treatments", sanitizedTreatment);
         if (!res.ok) {
           const data = await res.json();
@@ -118,6 +119,7 @@ export default function TreatmentsPage() {
         description: "Traitement ajouté avec succès",
       });
       form.reset();
+      setOpenDialog(false); // Close the dialog on success
     },
     onError: (error: any) => {
       toast({
@@ -242,7 +244,7 @@ export default function TreatmentsPage() {
             ))}
           </select>
 
-          <Dialog>
+          <Dialog open={openDialog} onOpenChange={setOpenDialog}> {/* Added open prop and onOpenChange */}
             <DialogTrigger asChild>
               <Button disabled={!selectedPatient}>
                 <Plus className="h-4 w-4 mr-2" />

@@ -17,10 +17,12 @@ import { Patient, InsertPatient } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Plus, Edit, Trash2, Loader2 } from "lucide-react";
+import Link from 'next/link'; // Added import for Link
+
 
 export default function PatientsPage() {
   const [search, setSearch] = useState("");
-  const [editingPatient, setEditingPatient] = useState<Patient | null>(null); // Added state for editing
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const { toast } = useToast();
 
   const { data: patients, isLoading } = useQuery<Patient[]>({
@@ -84,8 +86,11 @@ export default function PatientsPage() {
               <DialogTitle>Ajouter un patient</DialogTitle>
             </DialogHeader>
             <PatientForm
-              onSubmit={(data) => createPatientMutation.mutate(data)}
+              onSubmit={(data) => {
+                createPatientMutation.mutate(data);
+              }}
               isLoading={createPatientMutation.isPending}
+              onClose={() => {}} // Add onClose handler here - needs implementation in PatientForm
             />
           </DialogContent>
         </Dialog>
@@ -141,6 +146,10 @@ export default function PatientsPage() {
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
+                    {/*Added Payment Link */}
+                    <Link href={`/payments?patientId=${patient.id}`} >
+                      <Button variant="ghost" size="icon">Paiements</Button>
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))}
@@ -157,8 +166,12 @@ export default function PatientsPage() {
           {editingPatient && (
             <PatientForm
               initialValues={editingPatient}
-              onSubmit={() => alert('Edit Patient Logic Here')} // Placeholder for actual update logic
-              isLoading={false} // Add loading state as needed
+              onSubmit={() => {
+                // Placeholder for actual update logic -  Assume this will close the dialog
+                handleCloseEditDialog();
+              }}
+              isLoading={false}
+              onClose={handleCloseEditDialog}
             />
           )}
         </DialogContent>
