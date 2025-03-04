@@ -12,7 +12,7 @@ import { insertPaymentSchema, type Payment, type Patient, type Treatment } from 
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Loader2 } from "lucide-react";
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 
 export default function PaymentsPage() {
   const [selectedPatient, setSelectedPatient] = useState<Patient>();
