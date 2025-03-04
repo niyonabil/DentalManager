@@ -23,10 +23,20 @@ export default function MedicationsPage() {
   const createMedicationMutation = useMutation({
     mutationFn: async (medication: any) => {
       try {
-        const res = await apiRequest("POST", "/api/medications", medication);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Failed to create medication');
-        return data;
+        // Assurez-vous que les données sont correctement formatées
+        const sanitizedMedication = JSON.parse(JSON.stringify({
+          ...medication,
+          currentStock: Number(medication.currentStock),
+          minimumStock: Number(medication.minimumStock),
+          price: Number(medication.price)
+        }));
+        
+        const res = await apiRequest("POST", "/api/medications", sanitizedMedication);
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.message || 'Failed to create medication');
+        }
+        return await res.json();
       } catch (error) {
         console.error('Error creating medication:', error);
         throw error;

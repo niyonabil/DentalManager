@@ -50,14 +50,18 @@ export default function SettingsPage() {
   });
 
   const updateSettingsMutation = useMutation({
-    mutationFn: async (data: SystemSettings) => {
+    mutationFn: async (settings: any) => {
       try {
-        const res = await apiRequest("POST", "/api/settings", data);
-        const responseData = await res.json();
-        if (!res.ok) throw new Error(responseData.message || 'Failed to update settings');
-        return responseData;
+        // Assurez-vous que les données sont correctement formatées
+        const sanitizedSettings = JSON.parse(JSON.stringify(settings));
+        const res = await apiRequest("POST", "/api/settings", sanitizedSettings);
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Failed to update settings");
+        }
+        return await res.json();
       } catch (error) {
-        console.error('Error updating settings:', error);
+        console.error("Error updating settings:", error);
         throw error;
       }
     },

@@ -93,10 +93,19 @@ export default function TreatmentsPage() {
   const createTreatmentMutation = useMutation({
     mutationFn: async (treatment: any) => {
       try {
-        const res = await apiRequest("POST", "/api/treatments", treatment);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || 'Failed to create treatment');
-        return data;
+        // Assurez-vous que les données sont correctement formatées
+        const sanitizedTreatment = JSON.parse(JSON.stringify({
+          ...treatment,
+          date: treatment.date instanceof Date ? treatment.date.toISOString() : treatment.date,
+          medications: Array.isArray(treatment.medications) ? treatment.medications : []
+        }));
+        
+        const res = await apiRequest("POST", "/api/treatments", sanitizedTreatment);
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.message || 'Failed to create treatment');
+        }
+        return await res.json();
       } catch (error) {
         console.error('Error creating treatment:', error);
         throw error;

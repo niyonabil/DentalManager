@@ -94,6 +94,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(201).json(document);
   });
 
+  // Medication routes
+  app.get("/api/medications", async (req, res) => {
+    const medications = await storage.getMedications();
+    res.json(medications);
+  });
+
+  app.post("/api/medications", async (req, res) => {
+    const medication = await storage.createMedication(req.body);
+    res.status(201).json(medication);
+  });
+
+  app.patch("/api/medications/:id", async (req, res) => {
+    const updated = await storage.updateMedication(parseInt(req.params.id), req.body);
+    res.json(updated);
+  });
+
+  // Payment routes
+  app.get("/api/patients/:patientId/payments", async (req, res) => {
+    const payments = await storage.getPayments(parseInt(req.params.patientId));
+    res.json(payments);
+  });
+
+  app.post("/api/payments", async (req, res) => {
+    const payment = await storage.createPayment(req.body);
+    res.status(201).json(payment);
+  });
+
+  app.patch("/api/payments/:id", async (req, res) => {
+    const updated = await storage.updatePayment(parseInt(req.params.id), req.body);
+    res.json(updated);
+  });
+
+  // Settings routes
+  app.get("/api/settings", async (req, res) => {
+    const settings = await storage.getSettings();
+    res.json(settings);
+  });
+
+  app.post("/api/settings", async (req, res) => {
+    try {
+      const settings = await storage.updateSettings(req.body);
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating settings:", error);
+      res.status(400).json({ message: "Invalid settings data" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
