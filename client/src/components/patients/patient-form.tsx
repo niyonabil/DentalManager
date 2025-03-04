@@ -25,6 +25,8 @@ export function PatientForm({ onSubmit, defaultValues, isLoading }: PatientFormP
     defaultValues: {
       firstName: "",
       lastName: "",
+      cin: "",
+      dateOfBirth: "",
       phone: "",
       email: "",
       address: "",
@@ -66,12 +68,26 @@ export function PatientForm({ onSubmit, defaultValues, isLoading }: PatientFormP
 
         <FormField
           control={form.control}
+          name="cin"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Numéro CIN</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="dateOfBirth"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Date de naissance</FormLabel>
               <FormControl>
-                <Input type="date" {...field} value={field.value?.split('T')[0]} />
+                <Input type="date" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

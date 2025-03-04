@@ -21,7 +21,8 @@ export const patients = pgTable("patients", {
   id: serial("id").primaryKey(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
-  dateOfBirth: timestamp("date_of_birth"),
+  cin: text("cin").notNull(),
+  dateOfBirth: text("date_of_birth").notNull(),
   phone: text("phone"),
   email: text("email"),
   address: text("address"),
@@ -29,9 +30,12 @@ export const patients = pgTable("patients", {
   documents: json("documents").notNull().default([]),
 });
 
-export const insertPatientSchema = createInsertSchema(patients).omit({
-  id: true
-});
+export const insertPatientSchema = createInsertSchema(patients)
+  .omit({ id: true })
+  .extend({
+    dateOfBirth: z.string(),
+    cin: z.string().min(1, "Numéro CIN est obligatoire"),
+  });
 
 // Appointment model
 export const appointments = pgTable("appointments", {
