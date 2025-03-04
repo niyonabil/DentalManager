@@ -12,6 +12,7 @@ import AppointmentsPage from "@/pages/appointments-page";
 import BillingPage from "@/pages/billing-page";
 import WaitingRoomPage from "@/pages/waiting-room-page";
 import PublicWaitingRoom from "@/pages/public-waiting-room";
+import TreatmentsPage from "@/pages/treatments-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/patients" component={PatientsPage} />
       <ProtectedRoute path="/appointments" component={AppointmentsPage} />
+      <ProtectedRoute path="/treatments" component={TreatmentsPage} />
       <ProtectedRoute path="/billing" component={BillingPage} />
       <ProtectedRoute path="/waiting-room" component={WaitingRoomPage} />
       <Route path="/auth" component={AuthPage} />
