@@ -47,15 +47,6 @@ export default function BillingPage() {
     },
   });
 
-  const form = useForm({
-    defaultValues: {
-      patientId: selectedPatient?.id,
-      type: "invoice",
-      data: {},
-      date: new Date().toISOString(),
-    },
-  });
-
   const handleCreateDocument = async (type: string) => {
     if (!selectedPatient) return;
 
@@ -64,7 +55,7 @@ export default function BillingPage() {
       date: new Date().toLocaleDateString("fr-FR"),
       treatment_description: "Consultation dentaire",
       amount_in_words: "Cent euros",
-      amount_in_figures: "100.00 €",
+      amount_in_figures: "100,00 €",
     };
 
     createDocumentMutation.mutate({
@@ -155,7 +146,9 @@ export default function BillingPage() {
                     {new Date(doc.date).toLocaleDateString("fr-FR")}
                   </TableCell>
                   <TableCell className="capitalize">{doc.type}</TableCell>
-                  <TableCell>{(doc.data as any).amount_in_figures}</TableCell>
+                  <TableCell>
+                    {(doc.data as any)?.amount_in_figures || "N/A"}
+                  </TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"

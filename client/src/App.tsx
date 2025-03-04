@@ -11,6 +11,7 @@ import PatientsPage from "@/pages/patients-page";
 import AppointmentsPage from "@/pages/appointments-page";
 import BillingPage from "@/pages/billing-page";
 import WaitingRoomPage from "@/pages/waiting-room-page";
+import PublicWaitingRoom from "@/pages/public-waiting-room";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -22,6 +23,7 @@ function Router() {
       <ProtectedRoute path="/billing" component={BillingPage} />
       <ProtectedRoute path="/waiting-room" component={WaitingRoomPage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/waiting-room/public" component={PublicWaitingRoom} />
       <Route component={NotFound} />
     </Switch>
   );

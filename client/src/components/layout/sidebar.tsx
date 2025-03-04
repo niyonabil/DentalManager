@@ -12,17 +12,33 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const navigationItems = [
-  { href: "/", label: "Accueil", icon: Home },
-  { href: "/patients", label: "Patients", icon: Users },
-  { href: "/appointments", label: "Rendez-vous", icon: Calendar },
-  { href: "/billing", label: "Facturation", icon: FileText },
-  { href: "/waiting-room", label: "Salle d'attente", icon: Timer },
-];
+const navigationConfig = {
+  secretary: [
+    { href: "/", label: "Accueil", icon: Home },
+    { href: "/patients", label: "Patients", icon: Users },
+    { href: "/appointments", label: "Rendez-vous", icon: Calendar },
+    { href: "/waiting-room", label: "Salle d'attente", icon: Timer },
+  ],
+  dentist: [
+    { href: "/", label: "Accueil", icon: Home },
+    { href: "/patients", label: "Patients", icon: Users },
+    { href: "/waiting-room", label: "Salle d'attente", icon: Timer },
+  ],
+  admin: [
+    { href: "/", label: "Accueil", icon: Home },
+    { href: "/patients", label: "Patients", icon: Users },
+    { href: "/appointments", label: "Rendez-vous", icon: Calendar },
+    { href: "/billing", label: "Facturation", icon: FileText },
+    { href: "/waiting-room", label: "Salle d'attente", icon: Timer },
+  ],
+};
 
 export function Sidebar() {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
+
+  // Get navigation items based on user role
+  const navigationItems = user ? navigationConfig[user.role as keyof typeof navigationConfig] : [];
 
   return (
     <div className="w-64 bg-white border-r min-h-screen p-4 flex flex-col">
