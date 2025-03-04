@@ -1,20 +1,27 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
-import format from "date-fns/format";
-import parse from "date-fns/parse";
-import startOfWeek from "date-fns/startOfWeek";
-import getDay from "date-fns/getDay";
-import fr from "date-fns/locale/fr";
+import { format } from "date-fns";
+import { parse } from "date-fns";
+import { startOfWeek } from "date-fns";
+import { getDay } from "date-fns";
+import { fr } from "date-fns/locale/fr";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertAppointmentSchema, type Appointment, type InsertAppointment } from "@shared/schema";
+import { insertAppointmentSchema, type Appointment, type InsertAppointment, type Patient } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Loader2 } from "lucide-react";
@@ -35,8 +42,12 @@ export default function AppointmentsPage() {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const { toast } = useToast();
 
-  const { data: appointments, isLoading } = useQuery<Appointment[]>({
+  const { data: appointments, isLoading: isLoadingAppointments } = useQuery<Appointment[]>({
     queryKey: ["/api/appointments"],
+  });
+
+  const { data: patients, isLoading: isLoadingPatients } = useQuery<Patient[]>({
+    queryKey: ["/api/patients"],
   });
 
   const createAppointmentMutation = useMutation({
@@ -64,12 +75,17 @@ export default function AppointmentsPage() {
     },
   });
 
-  const events = appointments?.map(appointment => ({
-    id: appointment.id,
-    title: `Patient #${appointment.patientId}`,
-    start: new Date(appointment.date),
-    end: new Date(new Date(appointment.date).getTime() + appointment.duration * 60000),
-  })) || [];
+  const events = appointments?.map(appointment => {
+    const patient = patients?.find(p => p.id === appointment.patientId);
+    return {
+      id: appointment.id,
+      title: patient ? `${patient.firstName} ${patient.lastName}` : `Patient #${appointment.patientId}`,
+      start: new Date(appointment.date),
+      end: new Date(new Date(appointment.date).getTime() + appointment.duration * 60000),
+    };
+  }) || [];
+
+  const isLoading = isLoadingAppointments || isLoadingPatients;
 
   return (
     <DashboardLayout>
@@ -96,10 +112,25 @@ export default function AppointmentsPage() {
                   name="patientId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Patient ID</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
-                      </FormControl>
+                      <FormLabel>Patient</FormLabel>
+                      <Select
+                        onValueChange={(value) => field.onChange(parseInt(value))}
+                        value={field.value?.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner un patient" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {patients?.map((patient) => (
+                            <SelectItem key={patient.id} value={patient.id.toString()}>
+                              {patient.firstName} {patient.lastName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -110,8 +141,14 @@ export default function AppointmentsPage() {
                     <FormItem>
                       <FormLabel>Date et Heure</FormLabel>
                       <FormControl>
-                        <Input type="datetime-local" {...field} />
+                        <Input 
+                          type="datetime-local" 
+                          {...field} 
+                          value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
+                          onChange={(e) => field.onChange(new Date(e.target.value).toISOString())}
+                        />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -124,6 +161,7 @@ export default function AppointmentsPage() {
                       <FormControl>
                         <Input type="number" {...field} onChange={e => field.onChange(parseInt(e.target.value))} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -136,15 +174,15 @@ export default function AppointmentsPage() {
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
                 <Button type="submit" className="w-full" disabled={createAppointmentMutation.isPending}>
                   {createAppointmentMutation.isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    "Enregistrer"
-                  )}
+                  ) : null}
+                  Enregistrer
                 </Button>
               </form>
             </Form>
