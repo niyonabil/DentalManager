@@ -18,6 +18,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Plus, Edit, Trash2, Loader2 } from "lucide-react";
 import { Link } from 'wouter';
+import { useMemo } from 'react';
 
 
 export default function PatientsPage() {
