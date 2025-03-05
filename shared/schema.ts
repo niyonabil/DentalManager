@@ -193,7 +193,7 @@ export const settings = pgTable("settings", {
 // Statistics views
 export const financialStats = pgTable("financial_stats", {
   id: serial("id").primaryKey(),
-  date: date("date").notNull(),
+  date: timestamp("date").notNull(),
   totalRevenue: integer("total_revenue").notNull().default(0),
   treatmentCount: integer("treatment_count").notNull().default(0),
   patientCount: integer("patient_count").notNull().default(0),
