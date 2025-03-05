@@ -79,6 +79,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const updated = await storage.updateTreatment(parseInt(req.params.id), req.body);
     res.json(updated);
   });
+  
+  app.delete("/api/treatments/:id", async (req, res) => {
+    await storage.deleteTreatment(parseInt(req.params.id));
+    res.sendStatus(204);
+  });
 
   // Document routes
   app.get("/api/patients/:patientId/documents", async (req, res) => {
@@ -108,6 +113,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/medications/:id", async (req, res) => {
     const updated = await storage.updateMedication(parseInt(req.params.id), req.body);
     res.json(updated);
+  });
+  
+  app.delete("/api/medications/:id", async (req, res) => {
+    await storage.deleteMedication(parseInt(req.params.id));
+    res.sendStatus(204);
   });
 
   // Payment routes

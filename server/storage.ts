@@ -221,6 +221,14 @@ export class MemStorage implements IStorage {
   async updateTreatment(id: number, treatmentUpdate: Partial<Treatment>): Promise<Treatment> {
     const existing = this.treatments.get(id);
     if (!existing) throw new Error("Treatment not found");
+    
+    const updated = { ...existing, ...treatmentUpdate };
+    this.treatments.set(id, updated);
+    return updated;
+  }
+  
+  async deleteTreatment(id: number): Promise<void> {
+    this.treatments.delete(id);
 
     const updated = { ...existing, ...treatmentUpdate };
     this.treatments.set(id, updated);
@@ -267,6 +275,10 @@ export class MemStorage implements IStorage {
     const updated = { ...medication, ...data };
     this.medications.set(id, updated);
     return updated;
+  }
+  
+  async deleteMedication(id: number): Promise<void> {
+    this.medications.delete(id);
   }
 
   // Payment methods

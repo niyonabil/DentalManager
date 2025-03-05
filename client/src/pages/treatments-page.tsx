@@ -95,39 +95,80 @@ export default function TreatmentsPage() {
   const createTreatmentMutation = useMutation({
     mutationFn: async (treatment: any) => {
       try {
+        // Assurez-vous que le patientId est inclus
+        if (!treatment.patientId && selectedPatient) {
+          treatment.patientId = selectedPatient.id;
+        }
+
         const sanitizedTreatment = JSON.parse(JSON.stringify({
           ...treatment,
           date: treatment.date instanceof Date ? treatment.date.toISOString() : treatment.date,
-          medications: Array.isArray(treatment.medications) ? treatment.medications : []
+          medications: Array.isArray(treatment.medications) ? treatment.medications : [],
+          selectedTeeth: Array.isArray(treatment.selectedTeeth) ? treatment.selectedTeeth : []
         }));
 
+        console.log("Envoi du traitement:", sanitizedTreatment);
         const res = await apiRequest("POST", "/api/treatments", sanitizedTreatment);
+
         if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.message || 'Failed to create treatment');
+          throw new Error(`Error ${res.status}: ${await res.text()}`);
         }
-        return await res.json();
+
+        return res.json();
       } catch (error) {
-        console.error('Error creating treatment:', error);
+        console.error("Error creating treatment:", error);
         throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patients", selectedPatient?.id, "treatments"] });
+      setIsAddDialogOpen(false);
       toast({
-        title: "Succès",
+        title: "Success",
         description: "Traitement ajouté avec succès",
       });
-      form.reset();
-      setIsAddDialogOpen(false); 
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      console.error("Treatment creation error:", error);
       toast({
-        title: "Erreur",
-        description: error.message || "Impossible d'ajouter le traitement",
-        variant: "destructive"
+        title: "Error",
+        description: "Erreur lors de l'ajout du traitement: " + (error instanceof Error ? error.message : "Erreur inconnue"),
+        variant: "destructive",
       });
-    }
+    },
+  });
+
+  const updateTreatmentMutation = useMutation({
+    mutationFn: async (treatment: any) => {
+      try {
+        const res = await apiRequest("PATCH", `/api/treatments/${treatment.id}`, treatment);
+        return res.json();
+      } catch (error) {
+        console.error("Error updating treatment:", error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/patients", selectedPatient?.id, "treatments"] });
+      setIsAddDialogOpen(false);
+      toast({
+        title: "Success",
+        description: "Traitement mis à jour avec succès",
+      });
+    },
+  });
+
+  const deleteTreatmentMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/treatments/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/patients", selectedPatient?.id, "treatments"] });
+      toast({
+        title: "Success",
+        description: "Traitement supprimé avec succès",
+      });
+    },
   });
 
   const form = useForm({
@@ -141,6 +182,7 @@ export default function TreatmentsPage() {
       status: "completed",
       notes: "",
       medications: [],
+      selectedTeeth: []
     },
   });
 

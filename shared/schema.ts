@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, date } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -75,6 +75,7 @@ export const treatments = pgTable("treatments", {
   medications: json("medications").notNull().default([]), // Médicaments prescrits
   paymentStatus: text("payment_status").notNull().default("pending"), // pending, partial, completed
   paidAmount: integer("paid_amount").notNull().default(0),
+  selectedTeeth: json("selected_teeth").notNull().default([]),
 });
 
 export const insertTreatmentSchema = createInsertSchema(treatments)
@@ -87,6 +88,7 @@ export const insertTreatmentSchema = createInsertSchema(treatments)
     })),
     paymentStatus: z.enum(["pending", "partial", "completed"]).default("pending"),
     paidAmount: z.number().default(0),
+    selectedTeeth: z.array(z.number()).default([]),
   });
 
 // Payment model for tracking patient payments

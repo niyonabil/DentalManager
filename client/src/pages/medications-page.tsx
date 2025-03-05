@@ -15,7 +15,8 @@ import { Plus, AlertTriangle, PackagePlus, Loader2 } from "lucide-react";
 
 export default function MedicationsPage() {
   const { toast } = useToast();
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false); 
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
 
   const { data: medications } = useQuery<Medication[]>({
     queryKey: ["/api/medications"],
@@ -29,39 +30,90 @@ export default function MedicationsPage() {
 
   const createMedicationMutation = useMutation({
     mutationFn: async (medication: any) => {
-      try {
-        const sanitizedMedication = JSON.parse(JSON.stringify({
-          ...medication,
-          currentStock: Number(medication.currentStock),
-          minimumStock: Number(medication.minimumStock),
-          price: Number(medication.price)
-        }));
+      // Convertir les chaînes numériques en nombres
+      const sanitizedMedication = {
+        ...medication,
+        currentStock: Number(medication.currentStock),
+        minimumStock: Number(medication.minimumStock),
+        price: medication.price ? Number(medication.price) : undefined,
+        lastRestockDate: medication.lastRestockDate ? new Date(medication.lastRestockDate).toISOString() : null
+      };
 
-        const res = await apiRequest("POST", "/api/medications", sanitizedMedication);
-        if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.message || 'Failed to create medication');
-        }
-        return await res.json();
-      } catch (error) {
-        console.error('Error creating medication:', error);
-        throw error;
+      console.log("Envoi du médicament:", sanitizedMedication);
+      const res = await apiRequest("POST", "/api/medications", sanitizedMedication);
+
+      if (!res.ok) {
+        throw new Error(`Error ${res.status}: ${await res.text()}`);
       }
+
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
+      setIsAddDialogOpen(false);
+      toast({
+        title: "Succès",
+        description: "Médicament ajouté avec succès",
+      });
+    },
+    onError: (error) => {
+      console.error("Medication creation error:", error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de l'ajout du médicament: " + (error instanceof Error ? error.message : "Erreur inconnue"),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateMedicationMutation = useMutation({
+    mutationFn: async (medication: any) => {
+      const sanitizedMedication = {
+        ...medication,
+        currentStock: Number(medication.currentStock),
+        minimumStock: Number(medication.minimumStock),
+        price: medication.price ? Number(medication.price) : undefined,
+        lastRestockDate: medication.lastRestockDate ? new Date(medication.lastRestockDate).toISOString() : null
+      };
+
+      const res = await apiRequest("PATCH", `/api/medications/${medication.id}`, sanitizedMedication);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
+      setEditingMedication(null);
+      toast({
+        title: "Succès",
+        description: "Médicament mis à jour avec succès",
+      });
+    },
+    onError: (error) => {
+      console.error("Medication update error:", error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors de la mise à jour du médicament: " + (error instanceof Error ? error.message : "Erreur inconnue"),
+        variant: "destructive",
+      });
+    }
+  });
+
+  const deleteMedicationMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/medications/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/medications"] });
       toast({
         title: "Succès",
-        description: "Médicament ajouté avec succès",
+        description: "Médicament supprimé avec succès",
       });
-      form.reset();
-      setIsAddDialogOpen(false); 
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      console.error("Medication delete error:", error);
       toast({
         title: "Erreur",
-        description: error.message || "Impossible d'ajouter le médicament",
-        variant: "destructive"
+        description: "Erreur lors de la suppression du médicament: " + (error instanceof Error ? error.message : "Erreur inconnue"),
+        variant: "destructive",
       });
     }
   });
@@ -83,7 +135,7 @@ export default function MedicationsPage() {
     <DashboardLayout>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Médicaments</h1>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}> 
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={() => setIsAddDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -234,6 +286,12 @@ export default function MedicationsPage() {
                 <Button variant="outline" size="sm" className="w-full">
                   <PackagePlus className="h-4 w-4 mr-2" />
                   Réapprovisionner
+                </Button>
+                <Button variant="outline" size="sm" className="w-full mt-2" onClick={() => setEditingMedication(medication)}>
+                    Modifier
+                </Button>
+                <Button variant="destructive" size="sm" className="w-full mt-2" onClick={() => deleteMedicationMutation.mutate(medication.id)}>
+                    Supprimer
                 </Button>
               </div>
             </CardContent>

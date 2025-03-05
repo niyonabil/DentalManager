@@ -15,8 +15,8 @@ import {
 
 interface PatientFormProps {
   onSubmit: (data: InsertPatient) => void;
-  onClose?: () => void; // Added onClose prop
-  initialData?: Patient; // Added initialData prop
+  onClose?: () => void; 
+  initialData?: Patient; 
   isLoading?: boolean;
 }
 
@@ -31,16 +31,15 @@ export function PatientForm({ onSubmit, onClose, initialData, isLoading }: Patie
       phone: "",
       email: "",
       address: "",
-      ...initialData, // Use initialData for default values
+      ...initialData, 
     },
   });
 
   const handleFormSubmit = async (data: InsertPatient) => {
     try {
-      await onSubmit(data); // Placeholder for actual submission logic
-      onClose?.(); //Close the form after submission
+      await onSubmit(data); 
+      onClose?.(); 
     } catch (error) {
-      //Error handling -  replace with actual error handling
       console.error("Error submitting form:", error);
     }
   };

@@ -43,6 +43,21 @@ export default function PatientsPage() {
     },
   });
 
+  const updatePatientMutation = useMutation({
+    mutationFn: async (patient: Patient) => {
+      const res = await apiRequest("PATCH", `/api/patients/${patient.id}`, patient);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      setEditingPatient(null);
+      toast({
+        title: "Success",
+        description: "Patient mis à jour avec succès",
+      });
+    },
+  });
+
   const deletePatientMutation = useMutation({
     mutationFn: async (id: number) => {
       await apiRequest("DELETE", `/api/patients/${id}`);
@@ -56,10 +71,18 @@ export default function PatientsPage() {
     },
   });
 
-  const filteredPatients = patients?.filter(patient =>
-    patient.firstName.toLowerCase().includes(search.toLowerCase()) ||
-    patient.lastName.toLowerCase().includes(search.toLowerCase())
-  );
+  // Filter patients by search
+  const filteredPatients = useMemo(() => {
+    return (patients || []).filter((patient) => {
+      const searchLower = search.toLowerCase();
+      return (
+        patient.firstName.toLowerCase().includes(searchLower) ||
+        patient.lastName.toLowerCase().includes(searchLower) ||
+        patient.email?.toLowerCase().includes(searchLower) ||
+        patient.phone?.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [patients, search]);
 
   const handleEdit = (patient: Patient) => {
     setEditingPatient(patient);
@@ -166,10 +189,8 @@ export default function PatientsPage() {
           {editingPatient && (
             <PatientForm
               initialValues={editingPatient}
-              onSubmit={() => {
-                handleCloseEditDialog();
-              }}
-              isLoading={false}
+              onSubmit={(data) => updatePatientMutation.mutate(data)}
+              isLoading={updatePatientMutation.isPending}
               onClose={handleCloseEditDialog}
             />
           )}
