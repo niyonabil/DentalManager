@@ -57,11 +57,10 @@ app.use((req, res, next) => {
   }
 
   // Use a different port to avoid conflicts
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT || 3000;
   server.listen({
     port: Number(port),
-    host: "0.0.0.0",
-    reusePort: true,
+    host: "192.168.1.101"
   }, () => {
     log(`serving on port ${port}`);
   });

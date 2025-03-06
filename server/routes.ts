@@ -28,8 +28,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/patients/:id", async (req, res) => {
-    const updated = await storage.updatePatient(parseInt(req.params.id), req.body);
-    res.json(updated);
+    try {
+      const updated = await storage.updatePatient(parseInt(req.params.id), req.body);
+      res.json(updated);
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message === "Patient not found") {
+        return res.status(404).json({ error: "Patient not found" });
+      }
+      console.error("Error updating patient:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   });
 
   app.delete("/api/patients/:id", async (req, res) => {

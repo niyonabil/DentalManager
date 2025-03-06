@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,8 +20,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertTreatmentSchema, type Treatment, type Patient, type Medication } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, FileText, Pill, Loader2, Check } from "lucide-react";
+import { Plus, FileText, Pill, Loader2, Check, Trash, Calendar } from "lucide-react";
 import { generatePDF, type DocumentData } from "@/lib/pdf-generator";
+import { DentalChart } from "@/components/dental-chart";
+import { format } from "date-fns";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { z } from "zod";
 
 // Fonction pour convertir un nombre en texte (en français)
 function convertNumberToWords(num: number): string {
@@ -100,12 +106,12 @@ export default function TreatmentsPage() {
           treatment.patientId = selectedPatient.id;
         }
 
-        const sanitizedTreatment = JSON.parse(JSON.stringify({
+        const sanitizedTreatment = {
           ...treatment,
-          date: treatment.date instanceof Date ? treatment.date.toISOString() : treatment.date,
+          date: new Date(treatment.date),
           medications: Array.isArray(treatment.medications) ? treatment.medications : [],
           selectedTeeth: Array.isArray(treatment.selectedTeeth) ? treatment.selectedTeeth : []
-        }));
+        };
 
         console.log("Envoi du traitement:", sanitizedTreatment);
         const res = await apiRequest("POST", "/api/treatments", sanitizedTreatment);
@@ -141,7 +147,20 @@ export default function TreatmentsPage() {
   const updateTreatmentMutation = useMutation({
     mutationFn: async (treatment: any) => {
       try {
-        const res = await apiRequest("PATCH", `/api/treatments/${treatment.id}`, treatment);
+        const sanitizedTreatment = {
+          ...treatment,
+          date: treatment.date instanceof Date ? treatment.date.toISOString() : new Date(treatment.date).toISOString(),
+          medications: Array.isArray(treatment.medications) ? treatment.medications : [],
+          selectedTeeth: Array.isArray(treatment.selectedTeeth) ? treatment.selectedTeeth : []
+        };
+        
+        console.log("Mise à jour du traitement:", sanitizedTreatment);
+        const res = await apiRequest("PATCH", `/api/treatments/${treatment.id}`, sanitizedTreatment);
+        
+        if (!res.ok) {
+          throw new Error(`Error ${res.status}: ${await res.text()}`);
+        }
+        
         return res.json();
       } catch (error) {
         console.error("Error updating treatment:", error);
@@ -154,6 +173,14 @@ export default function TreatmentsPage() {
       toast({
         title: "Success",
         description: "Traitement mis à jour avec succès",
+      });
+    },
+    onError: (error) => {
+      console.error("Treatment update error:", error);
+      toast({
+        title: "Error",
+        description: "Erreur lors de la mise à jour du traitement: " + (error instanceof Error ? error.message : "Erreur inconnue"),
+        variant: "destructive",
       });
     },
   });
@@ -171,20 +198,67 @@ export default function TreatmentsPage() {
     },
   });
 
+  // Define a schema for treatment line items
+  const treatmentLineSchema = z.object({
+    description: z.string().min(1, "Description requise"),
+    cost: z.number().min(0, "Le coût doit être positif")
+  });
+
+  // Extended form schema with treatment lines
+  const extendedTreatmentSchema = insertTreatmentSchema.extend({
+    documentNumber: z.string().optional(),
+    treatmentLines: z.array(treatmentLineSchema).min(1, "Au moins une ligne de traitement est requise"),
+    patientType: z.enum(["adult", "child"]).default("adult")
+  });
+
   const form = useForm({
-    resolver: zodResolver(insertTreatmentSchema),
+    resolver: zodResolver(extendedTreatmentSchema),
     defaultValues: {
       patientId: 0,
       type: "",
       description: "",
       cost: 0,
-      date: new Date().toISOString(),
+      date: new Date(),
       status: "completed",
       notes: "",
       medications: [],
-      selectedTeeth: []
+      selectedTeeth: [],
+      documentNumber: "",
+      treatmentLines: [{ description: "", cost: 0 }],
+      patientType: "adult"
     },
   });
+  
+  // Helper function to add a treatment line
+  const addTreatmentLine = () => {
+    const currentLines = form.getValues("treatmentLines") || [];
+    form.setValue("treatmentLines", [...currentLines, { description: "", cost: 0 }]);
+  };
+
+  // Helper function to remove a treatment line
+  const removeTreatmentLine = (index: number) => {
+    const currentLines = form.getValues("treatmentLines") || [];
+    if (currentLines.length > 1) {
+      form.setValue("treatmentLines", currentLines.filter((_, i) => i !== index));
+    }
+  };
+
+  // Calculate total cost from treatment lines
+  const calculateTotalCost = () => {
+    const treatmentLines = form.getValues("treatmentLines") || [];
+    return treatmentLines.reduce((sum, line) => sum + (line.cost || 0), 0);
+  };
+  
+  // Update the cost field when treatment lines change
+  React.useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name?.startsWith('treatmentLines')) {
+        form.setValue("cost", calculateTotalCost());
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
 
   return (
     <DashboardLayout>
@@ -275,7 +349,7 @@ export default function TreatmentsPage() {
             className="px-3 py-2 border rounded-md"
             onChange={(e) => {
               const patient = patients?.find(p => p.id === parseInt(e.target.value));
-              setSelectedPatient(patient);
+              setSelectedPatient(patient || null);
             }}
           >
             <option value="">Sélectionner un patient</option>
@@ -293,7 +367,7 @@ export default function TreatmentsPage() {
                 Nouveau Traitement
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Ajouter un traitement</DialogTitle>
               </DialogHeader>
@@ -309,12 +383,94 @@ export default function TreatmentsPage() {
                   })}
                   className="space-y-4"
                 >
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Type de traitement</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Sélectionner un type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="implant">Implant</SelectItem>
+                              <SelectItem value="prothese">Prothèse</SelectItem>
+                              <SelectItem value="orthodontie">Orthodontie</SelectItem>
+                              <SelectItem value="extraction">Extraction</SelectItem>
+                              <SelectItem value="consultation">Consultation</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Date</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={"w-full pl-3 text-left font-normal"}
+                                >
+                                  {field.value ? (
+                                    format(new Date(field.value), "dd/MM/yyyy")
+                                  ) : (
+                                    <span>Sélectionner une date</span>
+                                  )}
+                                  <Calendar className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <CalendarComponent
+                                mode="single"
+                                selected={field.value ? new Date(field.value) : undefined}
+                                onSelect={(date) => {
+                                  field.onChange(date || new Date());
+                                }}
+                                disabled={(date) =>
+                                  date > new Date() || date < new Date("1900-01-01")
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <FormField
                     control={form.control}
-                    name="type"
+                    name="documentNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Type de traitement</FormLabel>
+                        <FormLabel>Numéro de document</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Numéro de facture ou bon" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="patientType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Type de patient</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -322,11 +478,8 @@ export default function TreatmentsPage() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="implant">Implant</SelectItem>
-                            <SelectItem value="prothese">Prothèse</SelectItem>
-                            <SelectItem value="orthodontie">Orthodontie</SelectItem>
-                            <SelectItem value="extraction">Extraction</SelectItem>
-                            <SelectItem value="consultation">Consultation</SelectItem>
+                            <SelectItem value="adult">Adulte</SelectItem>
+                            <SelectItem value="child">Enfant</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -336,35 +489,89 @@ export default function TreatmentsPage() {
 
                   <FormField
                     control={form.control}
-                    name="description"
+                    name="selectedTeeth"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel>Sélectionner les dents concernées</FormLabel>
                         <FormControl>
-                          <Textarea {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="cost"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Coût ({currencySymbol})</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          <DentalChart
+                            selectedTeeth={field.value}
+                            onChange={field.onChange}
+                            patientType={form.getValues("patientType") as "adult" | "child"}
                           />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <FormLabel>Lignes de traitement</FormLabel>
+                      <Button type="button" variant="outline" size="sm" onClick={addTreatmentLine}>
+                        <Plus className="h-4 w-4 mr-2" /> Ajouter une ligne
+                      </Button>
+                    </div>
+                    
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Description</TableHead>
+                          <TableHead className="w-[150px]">Coût ({currencySymbol})</TableHead>
+                          <TableHead className="w-[80px]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {form.getValues("treatmentLines").map((_, index) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <FormField
+                                control={form.control}
+                                name={`treatmentLines.${index}.description`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Description du traitement" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <FormField
+                                control={form.control}
+                                name={`treatmentLines.${index}.cost`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeTreatmentLine(index)}
+                                disabled={form.getValues("treatmentLines").length <= 1}
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
 
                   <FormField
                     control={form.control}

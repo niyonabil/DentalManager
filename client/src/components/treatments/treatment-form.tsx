@@ -12,6 +12,11 @@ import { CalendarIcon } from "lucide-react";
 import { Treatment, Medication } from "@shared/schema";
 import { DentalChart } from "./dental-chart";
 
+type MedicationItem = {
+  id: number;
+  quantity: number;
+};
+
 export function TreatmentForm({
   treatment,
   onSubmit,
@@ -26,23 +31,23 @@ export function TreatmentForm({
   availableMedications?: Medication[]
 }) {
   const [date, setDate] = useState<Date | undefined>(treatment?.date ? new Date(treatment.date) : new Date());
-  const [selectedMedications, setSelectedMedications] = useState<{id: number, quantity: number}[]>(
-    treatment?.medications || []
+  const [selectedMedications, setSelectedMedications] = useState<MedicationItem[]>(
+    Array.isArray(treatment?.medications) ? treatment?.medications as MedicationItem[] : []
   );
   const [selectedTeeth, setSelectedTeeth] = useState<number[]>(
-    treatment?.selectedTeeth || []
+    Array.isArray(treatment?.selectedTeeth) ? treatment?.selectedTeeth as number[] : []
   );
 
   const { register, handleSubmit } = useForm({
     defaultValues: {
-      procedure: treatment?.procedure,
+      type: treatment?.type,
       description: treatment?.description,
       cost: treatment?.cost,
-      status: treatment?.status,
+      status: treatment?.status || "completed",
     },
   });
 
-  const procedureInput = register("procedure");
+  const typeInput = register("type");
   const descriptionInput = register("description");
   const costInput = register("cost");
   const statusInput = register("status");
@@ -51,11 +56,11 @@ export function TreatmentForm({
   const handleSubmitForm = (data: any) => {
     const formValues = {
       patientId: patientId || treatment?.patientId,
-      procedure: data.procedure,
+      type: data.type,
       description: data.description,
       cost: parseInt(data.cost),
       status: data.status,
-      date,
+      date: date ? new Date(date) : new Date(), // Ensure date is a proper Date object
       medications: selectedMedications,
       selectedTeeth: selectedTeeth
     };
@@ -68,8 +73,15 @@ export function TreatmentForm({
     <form onSubmit={handleSubmit(handleSubmitForm)}>
       <div className="space-y-4">
         <div>
-          <Label htmlFor="procedure">Procédure</Label>
-          <Input id="procedure" {...procedureInput} />
+          <Label htmlFor="type">Type de traitement</Label>
+          <select id="type" className="w-full p-2 border rounded" {...typeInput}>
+            <option value="">Sélectionner un type</option>
+            <option value="implant">Implant</option>
+            <option value="prothese">Prothèse</option>
+            <option value="orthodontie">Orthodontie</option>
+            <option value="extraction">Extraction</option>
+            <option value="consultation">Consultation</option>
+          </select>
         </div>
         <div>
           <Label htmlFor="description">Description</Label>
@@ -97,7 +109,12 @@ export function TreatmentForm({
               </Button>
             </PopoverTrigger>
             <PopoverContent>
-              <Calendar date={date} onPickDate={setDate} />
+              <Calendar 
+                mode="single"
+                selected={date}
+                onSelect={setDate}
+                disabled={(date) => date < new Date("1900-01-01")} 
+              />
             </PopoverContent>
           </Popover>
         </div>

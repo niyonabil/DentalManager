@@ -1,4 +1,4 @@
-import { users, patients, appointments, treatments, documents } from "@shared/schema";
+import { users, patients, appointments, treatments, documents } from "@shared/schema";  
 import type { User, InsertUser, Patient, InsertPatient, Appointment, InsertAppointment, Treatment, InsertTreatment, Document, InsertDocument } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
@@ -71,6 +71,7 @@ export interface IStorage {
   getTreatments(patientId: number): Promise<Treatment[]>;
   createTreatment(treatment: InsertTreatment): Promise<Treatment>;
   updateTreatment(id: number, treatment: Partial<Treatment>): Promise<Treatment>;
+  deleteTreatment(id: number): Promise<void>;
 
   // Document operations
   getDocuments(patientId: number): Promise<Document[]>;
@@ -91,7 +92,7 @@ export interface IStorage {
   updateSettings(data: Partial<Settings>): Promise<Settings>;
 
   // Session store
-  sessionStore: session.SessionStore;
+sessionStore: typeof session.Store;
 }
 
 export class MemStorage implements IStorage {
@@ -100,7 +101,7 @@ export class MemStorage implements IStorage {
   private appointments: Map<number, Appointment>;
   private treatments: Map<number, Treatment>;
   private documents: Map<number, Document>;
-  sessionStore: session.SessionStore;
+  sessionStore: typeof session.Store;
 
   private currentIds: {
     user: number;
@@ -125,9 +126,9 @@ export class MemStorage implements IStorage {
       document: 1
     };
 
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000 // 24h
-    });
+    // Create an instance of MemoryStore instead of using the class itself
+    this.sessionStore = new MemoryStore();
+     
   }
 
   // User operations
@@ -143,7 +144,12 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentIds.user++;
-    const user: User = { ...insertUser, id };
+    // Ensure role is set, defaulting to 'user' if not provided
+    const user: User = { 
+      ...insertUser, 
+      id,
+      role: insertUser.role || 'user'
+    };
     this.users.set(id, user);
     return user;
   }
@@ -159,7 +165,15 @@ export class MemStorage implements IStorage {
 
   async createPatient(insertPatient: InsertPatient): Promise<Patient> {
     const id = this.currentIds.patient++;
-    const patient: Patient = { ...insertPatient, id };
+    const patient: Patient = {
+      ...insertPatient,
+      id,
+      phone: insertPatient.phone ?? null,
+      email: insertPatient.email ?? null,
+      address: insertPatient.address ?? null,
+      medicalHistory: insertPatient.medicalHistory ?? null,
+      documents: insertPatient.documents ?? null
+    };
     this.patients.set(id, patient);
     return patient;
   }
@@ -186,12 +200,16 @@ export class MemStorage implements IStorage {
     return this.appointments.get(id);
   }
 
-  async createAppointment(insertAppointment: InsertAppointment): Promise<Appointment> {
-    const id = this.currentIds.appointment++;
-    const appointment: Appointment = { ...insertAppointment, id };
-    this.appointments.set(id, appointment);
-    return appointment;
-  }
+async createAppointment(insertAppointment: InsertAppointment): Promise<Appointment> {
+  const id = this.currentIds.appointment++;
+  const appointment: Appointment = {
+    ...insertAppointment,
+    id,
+    notes: insertAppointment.notes ?? null
+  };
+  this.appointments.set(id, appointment);
+  return appointment;
+}
 
   async updateAppointment(id: number, appointmentUpdate: Partial<Appointment>): Promise<Appointment> {
     const existing = await this.getAppointment(id);
@@ -211,12 +229,20 @@ export class MemStorage implements IStorage {
     return Array.from(this.treatments.values()).filter(t => t.patientId === patientId);
   }
 
-  async createTreatment(insertTreatment: InsertTreatment): Promise<Treatment> {
+async createTreatment(insertTreatment: InsertTreatment): Promise<Treatment> {
     const id = this.currentIds.treatment++;
-    const treatment: Treatment = { ...insertTreatment, id };
+    const treatment: Treatment = {
+        ...insertTreatment,
+        id,
+        status: insertTreatment.status || 'pending',
+        notes: insertTreatment.notes ?? null,
+        documentId: insertTreatment.documentId ?? null,
+        medications: insertTreatment.medications ?? [],
+        selectedTeeth: insertTreatment.selectedTeeth ?? []
+    };
     this.treatments.set(id, treatment);
     return treatment;
-  }
+}
 
   async updateTreatment(id: number, treatmentUpdate: Partial<Treatment>): Promise<Treatment> {
     const existing = this.treatments.get(id);
@@ -228,11 +254,11 @@ export class MemStorage implements IStorage {
   }
   
   async deleteTreatment(id: number): Promise<void> {
+    const treatment = this.treatments.get(id);
+    if (!treatment) {
+      throw new Error("Treatment not found");
+    }
     this.treatments.delete(id);
-
-    const updated = { ...existing, ...treatmentUpdate };
-    this.treatments.set(id, updated);
-    return updated;
   }
 
   // Document operations
@@ -244,9 +270,19 @@ export class MemStorage implements IStorage {
     const documents = await this.getDocuments(data.patientId);
     const newDocument: Document = {
       id: documents.length ? Math.max(...documents.map(d => d.id)) + 1 : 1,
-      ...data,
+      number: data.number || null,
+      date: data.date,
+      patientId: data.patientId,
+      type: data.type,
+      status: data.status || 'draft',
+      data: data.data,
+      notes: data.notes || null,
+      documentNumber: data.documentNumber || null,
+      items: data.items,
+      total: data.total,
+      payments: data.payments || []
     };
-    this.documents.set(`${newDocument.patientId}:${newDocument.id}`, newDocument);
+    this.documents.set(newDocument.id, newDocument);
     return newDocument;
   }
 

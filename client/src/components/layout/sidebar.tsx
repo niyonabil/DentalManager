@@ -12,7 +12,8 @@ import {
   ActivitySquare,
   BarChart,
   Loader2,
-  Settings
+  Settings,
+  DollarSignIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -22,6 +23,7 @@ const navigationConfig = {
     { href: "/patients", label: "Patients", icon: Users },
     { href: "/appointments", label: "Rendez-vous", icon: Calendar },
     { href: "/waiting-room", label: "Salle d'attente", icon: Timer },
+    { href: "/payments", label: "Payements Patients", icon: DollarSignIcon },
   ],
   dentist: [
     { href: "/", label: "Accueil", icon: Home },
@@ -29,6 +31,7 @@ const navigationConfig = {
     { href: "/treatments", label: "Traitements", icon: ActivitySquare },
     { href: "/medications", label: "Médicaments", icon: Pill },
     { href: "/waiting-room", label: "Salle d'attente", icon: Timer },
+    { href: "/payments", label: "Payements Patients", icon: DollarSignIcon },
     { href: "/billing", label: "Documents", icon: FileText },
     { href: "/stats", label: "Statistiques", icon: BarChart },
   ],
@@ -40,6 +43,7 @@ const navigationConfig = {
     { href: "/medications", label: "Médicaments", icon: Pill },
     { href: "/billing", label: "Documents", icon: FileText },
     { href: "/waiting-room", label: "Salle d'attente", icon: Timer },
+    { href: "/payments", label: "Payements Patients", icon: DollarSignIcon },
     { href: "/stats", label: "Statistiques", icon: BarChart },
     { href: "/settings", label: "Paramètres", icon: Settings },
   ],

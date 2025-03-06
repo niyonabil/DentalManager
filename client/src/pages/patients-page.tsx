@@ -182,15 +182,23 @@ export default function PatientsPage() {
         </div>
       )}
       {/* Edit Patient Dialog */}
-      <Dialog open={editingPatient !== null} onClose={handleCloseEditDialog}>
+      <Dialog open={editingPatient !== null}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Modifier le patient</DialogTitle>
           </DialogHeader>
           {editingPatient && (
             <PatientForm
-              initialValues={editingPatient}
-              onSubmit={(data) => updatePatientMutation.mutate(data)}
+              initialData={editingPatient}
+              onSubmit={(data) => updatePatientMutation.mutate({ 
+                ...data, 
+                id: editingPatient.id,
+                phone: data.phone ?? null,
+                email: data.email ?? null,
+                address: data.address ?? null,
+                medicalHistory: data.medicalHistory ?? null,
+                documents: data.documents ?? null
+              })}
               isLoading={updatePatientMutation.isPending}
               onClose={handleCloseEditDialog}
             />

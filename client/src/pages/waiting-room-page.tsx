@@ -51,11 +51,17 @@ export default function WaitingRoomPage() {
       const res = await apiRequest("PATCH", `/api/appointments/${id}`, { status });
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      
+      const statusMessages = {
+        "in_progress": "Patient appelé en consultation",
+        "completed": "Consultation terminée"
+      };
+      
       toast({
         title: "Success",
-        description: "Liste d'attente mise à jour",
+        description: statusMessages[variables.status as keyof typeof statusMessages] || "Liste d'attente mise à jour",
       });
     },
   });
@@ -151,17 +157,35 @@ export default function WaitingRoomPage() {
                         appointment.isPassenger ? "border-2 border-blue-200" : ""
                       )}
                     >
-                      <div className="font-medium">
-                        {appointment.patient?.firstName} {appointment.patient?.lastName}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {new Date(appointment.date).toLocaleTimeString("fr-FR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </div>
-                      <div className="text-sm font-medium text-primary">
-                        {getPatientStatus(appointment)}
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-medium">
+                            {appointment.patient?.firstName} {appointment.patient?.lastName}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {new Date(appointment.date).toLocaleTimeString("fr-FR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </div>
+                          <div className="text-sm font-medium text-primary">
+                            {getPatientStatus(appointment)}
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updateAppointmentMutation.mutate({
+                            id: appointment.id,
+                            status: "completed"
+                          })}
+                          disabled={updateAppointmentMutation.isPending}
+                        >
+                          {updateAppointmentMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          ) : null}
+                          Terminer
+                        </Button>
                       </div>
                     </div>
                   ))}
